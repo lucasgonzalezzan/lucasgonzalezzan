@@ -28,19 +28,21 @@ So far, the bot accepts the following commands from any Telegram chat:
 
 ## Usage
 
- ```TOKEN=1234567890:ABCDEFGHIJKMNLOPQRSTUVXYZabcdefghij 
+ ```
+TOKEN=1234567890:ABCDEFGHIJKMNLOPQRSTUVXYZabcdefghij 
 export TOKEN
 python bot.py
 ```
 
 Output log:
-> 2022-03-16 17:03:28,297 - root - DEBUG - Payload is: {'ok': True, 'result': []} Status is: 200
-> 2022-03-16 17:03:28,297 - root - INFO - No messages to process.
-> 2022-03-16 17:04:27,464 - root - INFO - Processing 1 menssages, last update_id was 441657297
-> 2022-03-16 17:04:27,464 - telegram_msg_process - DEBUG - Last command was: None
+> 2022-03-16 17:03:28,297 - root - DEBUG - Payload is: {'ok': True, 'result': []} Status is: 200 <br/>
+> 2022-03-16 17:03:28,297 - root - INFO - No messages to process. <br/>
+> 2022-03-16 17:04:27,464 - root - INFO - Processing 1 menssages, last update_id was 441657297 <br/>
+> 2022-03-16 17:04:27,464 - telegram_msg_process - DEBUG - Last command was: None <br/>
 
 Logging is saved in "bot.log". Optionally, we can set the debuggin level via the environment variable:
-``` LOGLVL = DEBUG
+``` 
+LOGLVL = DEBUG
 export LOGLVL
 ```
 
