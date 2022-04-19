@@ -26,7 +26,7 @@ The bot accepts the following commands from any Telegram chat:
 - /info --- Return this source code link
 
 [^1]: The average is computed as the root of the total inflation (radicand) with radix as the number of months:
-(<sup> months </sup> √ months). In other words, a constant inflation of the average over the period of months results in the given total inflation.
+(<sup> months </sup> √ inf). In other words, a constant inflation of the average over the period of months results in the given total inflation.
 
 <!-- [![](livebot.gif), align=center]()
  --> 
