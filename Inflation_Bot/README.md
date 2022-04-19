@@ -25,13 +25,13 @@ The bot accepts the following commands from any Telegram chat:
 - /project --- Calculate the average inflation per month [^1] in a given periods an returns the inflation in next months/years, assuming constant inflation for each month
 - /info --- Return this source code link
 
-[^1]: The average is computed as the root, with radix the number of months, of the total inflation (radicand) ---> 
-^months^√~total~  . In other words, a constant inflation of the average over the period of months results in the given total inflation.
+[^1]: The average is computed as the root of the total inflation (radicand) with radix as the number of months:
+(<sup> months </sup> √ months). In other words, a constant inflation of the average over the period of months results in the given total inflation.
 
 <!-- [![](livebot.gif), align=center]()
  --> 
 
- <img src="livebot.gif"  width="754" height="480" border="1" align="center" />
+ <img src="livebot.gif"   border="1" align="center" />
 
 
 ## Usage
