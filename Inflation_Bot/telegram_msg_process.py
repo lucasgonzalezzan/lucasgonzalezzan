@@ -1,142 +1,203 @@
 import logging
 import os
 from datetime import datetime, timezone, timedelta
-
-from telegram_pushing import push
+from telegram_pushing import push, push_photo
 from get_datos_gob_ar import ipc_poll
+from calc_datos_gob_ar import cumulative_meses, promedio_meses, project_meses
+from json_file_rw import json_write, bin_read
 
-from json_file_rw import json_read, json_write
 import apidata 
+
 
 logger = logging.getLogger(__name__) #to change level see: logging.conf [logger_telegram_msg_process]
 
 
-def data_handler(bottoken, msg):
+def data_handler(token, msg):
 
-    global chat_id, text, token 
-    token = bottoken
-
-    logger.debug(f"Last command was: {apidata.last_cmd!r}") 
 
     if 'callback_query' in msg and 'data' in msg['callback_query']:
         chat_id = int(msg['callback_query']['from']['id'])
         text = str(msg['callback_query']['data']).lower() 
-        return call_handler()
+        if chat_id not in apidata.last_cmd: apidata.last_cmd[chat_id] = None  #new user
+        return call_handler(token, chat_id, text)
     if 'message' in msg:
         chat_id = int(msg['message']['from']['id'])
         text = str(msg['message']['text']).lower() #ya vi si existe 
+        if chat_id not in apidata.last_cmd: apidata.last_cmd[chat_id] = None  #new user
         if 'entities' in msg['message'] and msg['message']['entities'][0]['type'] == "bot_command":
-            return cmd_handler()
+            return cmd_handler(token, chat_id, text)
         #'message' exits but not 'bot_commnad'
-        elif apidata.last_cmd:
-            return last_cmd_handler()
+        elif apidata.last_cmd[chat_id]:
+            return last_cmd_handler(token, chat_id, text)
         else:
-            return msg_handler()
+            return msg_handler(token, chat_id, text)
     else: raise TypeError("No 'message' nor 'callback_query' fields in the dictionary!")
 
-def call_handler():
-    if text[0] == "/": return cmd_handler()
-    else: return msg_handler()
+def call_handler(token, chat_id, text):
+    if text[0] == "/": return cmd_handler(token, chat_id, text)
+    else: return msg_handler(token, chat_id, text)
 
-def cmd_handler():
+def cmd_handler(token, chat_id, text):
 
     match text:
         case "/start":            
-            logger.info("Starting bot message processing. \n Loading JSON data from data/IPC.json")
-            apidata.last_cmd = None #Mark Complete
-            try: 
-                apidata.ipc = json_read(apidata.home + "/data/IPC.json") 
-            except FileNotFoundError:
-                logger.exception("Failed to load JSON file at /start. Toca /update para actualizar.") #logs trace
-                push(token, chat_id, "ERROR: Failed to load JSON file. Toca /update para actualizar.")
-                return 404
+            apidata.last_cmd[chat_id] = None #Mark Complete
+            if len(apidata.ipc) < 2:    #default apidata is a list with one item, unless loaded IPC.json OK
+                logger.info("No JSON file at /start. Toca /update para actualizar.") #logs trace
+                return push(token, chat_id, "Failed to load JSON file\\. Toca */update* para actualizar", MarkdownV2=True)
             else:
-                logger.debug(f"Loaded local file data/IPC.json: {apidata.ipc!r}")
-                return push(token, chat_id, "Hola\\! \nToca */help* para menu de ayuda", MarkdownV2=True) 
+                return push(token, chat_id, "Hola\\! \nToca */help* para menu de ayuda\nToca */calcanual* o */calcmeses* para promedios de inflacion\nToca */project* para proyectar la inflacion a futuro segun % promedio", MarkdownV2=True) 
             #MarkdownV2. At the same time these _ * [ ] ( ) ~ > # + - = | { } . ! characters must be escaped with the preceding character \.
 
+        case "/basta":
+            push(token, chat_id, "   Bye bye\n      (o o)\n--o--(_)--o--\nHave a nice day!")
+            logger.critical("Exiting bot on user request")
+            exit(0)
 
         case "/help":
-            apidata.last_cmd = None
+            apidata.last_cmd[chat_id] = None
             return push(token, chat_id, "Elige una opcion: ", 
                     {'inline_keyboard': [
-                                        [{'text':"Calc",'callback_data':"/calc_anual"}, {'text':"Tiempo",'callback_data':"/time"}],
+                                        [{'text':"Calc anual",'callback_data':"/calcanual"},{'text':"Calc promedio mensual",'callback_data':"/promedio"}],
+                                        [{'text':"Calc X meses",'callback_data':"/calcmeses"},{'text':"Ver IPC datos.gob.ar",'callback_data':"/raw"}],
+                                        [{'text':"Projectar X meses",'callback_data':"/project"},{'text':"Tiempo en Argentina",'callback_data':"/time"}],
                                         [{'text':"Actualizar IPC",'callback_data':"/update"}]
                                         ]
                     })
 
-        case ("/date" | "/time"):
-            apidata.last_cmd = None
+        case "/date" | "/time":
+            apidata.last_cmd[chat_id] = None
             tzinfoARG = timezone(timedelta(hours=-3))
             now = datetime.now(tzinfoARG)
             logger.debug(f"TIME: {now!r}")
             return push(token, chat_id,"Fecha: " + now.strftime('%d/%B/%Y') + "\nHora en Argentina: " + now.strftime('%H : %M : %S') )
 
         case "/update":
-            apidata.last_cmd = None
-            try:
-                apidata.ipc, status = ipc_poll("2017-01-01")
-                if not(200 <= status < 300): raise ValueError('ERROR: No fue posible obtener datos de IPC desde datos.gob.ar')
-                
-                if not(os.path.isdir (apidata.home + "/data")): os.mkdir(apidata.home + "/data") #if no dir, create it
-                json_write(apidata.home + "/data/IPC.json", apidata.ipc)        
-                logger.debug(f"Got {len(apidata.ipc)} values with status {status}, written to local file IPC.json") 
+            apidata.last_cmd[chat_id] = None
+            data, status = ipc_poll("2017-01-01")
+            if not(200 <= status < 300): return push(token, chat_id, f"ERROR: No fue posible obtener datos de IPC desde datos.gob.ar") 
+            try:    #verify data
+                _ = data[0]     #at least one item in list
+                for d, v, *_ in data:   #for every item, a date, a float, and whatever
+                    _ = str(d)      #date
+                    _ = float(v)    #IPC 
+            except (ValueError, IndexError): #Some strings can be converted to float, for example 123.
+                logger.exception(f"Got status {status}, ipc data {data!r}") 
+                return push(token, chat_id, f"ERROR: No fue posible obtener datos de IPC desde datos.gob.ar") 
 
-                #show proof all OK
-                chunk = ""
-                for i in apidata.ipc[len(apidata.ipc)-6:]:
-                    chunk = chunk + i[0] + " - " + str(round(i[1]*100, 2)) + "%\n"
-                return  push(token, chat_id, f"Actualizados datos de IPC desde datos.gob.ar \nUltimos 6 meses: \n{chunk}")  
-            except (ValueError, TypeError) as e:
-                apidata.ipc = None
-                logger.exception(f"Got status {status}, ipc data {apidata.ipc!r}") 
-                push(token, chat_id, f"ERROR: No fue posible obtener datos de IPC desde datos.gob.ar") 
-                return 404
+            apidata.ipc = data
+            if not(os.path.isdir (apidata.home + "/data")): os.mkdir(apidata.home + "/data") #if no dir, create it
+            b = json_write(apidata.home + "/data/IPC_updated.json", apidata.ipc)        
+            logger.debug(f"Got {len(apidata.ipc)} values with status {status}, written to local file IPC_updated.json {b} bytes long") 
+            #show proof all OK
+            chunk = ""
+            for i in apidata.ipc[-6:]:  #last 6 indices
+                chunk = chunk + i[0] + " - " + str(round(i[1]*100, 2)) + "%\n"
+            return  push(token, chat_id, f"Actualizados datos de IPC desde datos.gob.ar \nUltimos 6 meses: \n{chunk}")  
 
-        case "/calc_anual":
-            if apidata.ipc is None: 
-                return push(token, chat_id, "No tengo datos de inflacion\\. \nPor favor toca */start* o */update*", MarkdownV2=True) 
-            apidata.last_cmd = "/calc_anual"
-            logger.debug(f"Setting Last command to: {apidata.last_cmd}")  
-            return push(token, chat_id, f"Calcular % acumulado de cuantos meses?")      
-            
+        case "/calcmeses":
+            apidata.last_cmd[chat_id] = "/calcmeses"
+            logger.debug(f"Setting Last command to: {apidata.last_cmd[chat_id]}")  
+            return push(token, chat_id, f"Calcular % acumulado de cuantos meses?") 
+
+        case "/raw":
+            apidata.last_cmd[chat_id] = "/raw"
+            logger.debug(f"Setting Last command to: {apidata.last_cmd[chat_id]}")  
+            return push(token, chat_id, f"Mostrar datos de cuantos meses?") 
+
+        case "/project":
+            apidata.last_cmd[chat_id] = "/project"
+            logger.debug(f"Setting Last command to: {apidata.last_cmd[chat_id]}")  
+            return push(token, chat_id, f"Projectar inflacion usando cuantos meses?")         
+
+        case "/calcanual":
+            apidata.last_cmd[chat_id] = None
+            return push(token, chat_id, 
+                        f"Acumulado anual: {cumulative_meses(12):.2f}%\n\n"  
+                        f"Acumulado semestral: {cumulative_meses(6,-1):.2f}% \nSemestre anterior: {cumulative_meses(6,-6):.2f}%\n\n" 
+                        f"Trimestral (1-3): {cumulative_meses(3,-1):.2f}%\nTrimestral (4-6): {cumulative_meses(3,-4):.2f}%\n"
+                        f"Trimestral (7-9): {cumulative_meses(3,-7):.2f}%\nTrimestral (10-12): {cumulative_meses(3,-10):.2f}%"
+                        )
+
+        case "/promedio":
+            apidata.last_cmd[chat_id] = None
+            return push(token, chat_id, 
+                        f"Promedios calculados como (meses) √ (total)\ni.e. mismo % en cada mes en el periodo para igualar /calcanual\n\n"  
+                        f"Promedio anual: {promedio_meses(12):.2f}%\n\n"  
+                        f"Promedio semestral: {promedio_meses(6,-1):.2f}% \nSemestre anterior: {promedio_meses(6,-6):.2f}%\n\n" 
+                        f"Trimestral (1-3): {promedio_meses(3,-1):.2f}%\nTrimestral (4-6): {promedio_meses(3,-4):.2f}%\n"
+                        f"Trimestral (7-9): {promedio_meses(3,-7):.2f}%\nTrimestral (10-12): {promedio_meses(3,-10):.2f}%"
+                        )
+
+        case "/ezeiza":
+            apidata.last_cmd[chat_id] = None
+            return push_photo(token, chat_id,f"La salida es Ezeiza #PLP", bin_read(apidata.home + "/data/nuevereinas.jpg"))
+
+        case "/info":
+            return push(token, chat_id, f"Source code: https://github.com/lucasgonzalezzan/lucasgonzalezzan/tree/master/Inflation_Bot")
 
         case _:
-            apidata.last_cmd = None
+            apidata.last_cmd[chat_id] = None
             logger.warning(f"Couln't understand in cmd_handler: {text}")
             return push(token, chat_id,"Sorry, I didn't understand you")
 
 
-def last_cmd_handler():
+def last_cmd_handler(token, chat_id, text):
 
-    match apidata.last_cmd:
-        case "/calc_anual":
+    match apidata.last_cmd[chat_id]:
+        case "/calcmeses":
             try:
+                apidata.last_cmd[chat_id] = None #Mark Complete
                 logger.debug(f"text: {text}")
-                meses = int(text) 
+                meses = abs(int(text))       
                 logger.debug(f"Meses: {text}")
                 if not(0 < meses <= len(apidata.ipc)): raise ValueError('Cantidad de meses fuera de rango')
-                last = len(apidata.ipc)-1
-                logger.debug(f"last: {last}")
-                w = 1
-                for i in range(meses):
-                    w = (float(apidata.ipc[last-i][1]) + 1) * w
-                    logger.debug(f"Step: {i}, accumulado {w}")
-                total = (w - 1) * 100
-                apidata.last_cmd = None #Mark Complete
-                return push(token, chat_id, f"El la inflacion acumulada en {meses} meses es de {total:.2f}%") 
-
-            except (ValueError, TypeError):
-                logger.exception("Meses was not an int!")
+            except ValueError:
+                logger.exception(f"Meses was not an int!")
                 return push(token, chat_id, f"Por favor ingresa un numero *natural* de uno a {len(apidata.ipc)}", MarkdownV2=True) 
-     
+                
+            return push(token, chat_id, f"La inflacion acumulada en {meses} meses es de {cumulative_meses(meses):.2f}%\n Projectar /project") 
+
+        case "/raw":
+            try:
+                apidata.last_cmd[chat_id] = None #Mark Complete
+                meses = abs(int(text))
+                if not(0 < meses <= len(apidata.ipc)): raise ValueError('Cantidad de meses fuera de rango')
+            except ValueError:
+                logger.exception(f"Meses was not an int!")
+                return push(token, chat_id, f"Por favor ingresa un numero *natural* de uno a {len(apidata.ipc)}", MarkdownV2=True) 
+            chunk = ""
+            for i in apidata.ipc[-meses:]:  #meses is +int
+                chunk = chunk + i[0] + " - " + str(round(i[1]*100, 2)) + "%\n"
+            return push(token, chat_id, f"Actualizados datos de IPC desde datos.gob.ar \nUltimos {meses} meses: \n{chunk}")  
+
+        case "/project":
+            try:
+                apidata.last_cmd[chat_id] = None #Mark Complete
+                meses = abs(int(text))
+                if not(0 < meses <= len(apidata.ipc)): raise ValueError('Cantidad de meses fuera de rango')
+            except ValueError:
+                logger.exception(f"Meses was not an int!")
+                return push(token, chat_id, f"Por favor ingresa un numero *natural* de uno a {len(apidata.ipc)}", MarkdownV2=True) 
+
+            avg = promedio_meses(meses)
+            return push(token, chat_id, 
+                        f"La inflacion acumulada en {meses} meses es de {cumulative_meses(meses):.2f}%\nPara otros promedios usa /calcmeses\n\n"
+                        f"Projeccion de inflacion con promedio de {avg:.2f}% en cada mes:\n"  
+                        f"En 3 meses: {project_meses(3, avg):.2f}%\n"  
+                        f"En 6 meses: {project_meses(6, avg):.2f}%\n" 
+                        f"En un año: {project_meses(12, avg):.2f}%\n"
+                        f"En 2 años: {project_meses(24, avg):.2f}%\n"
+                        f"En 10 años: {project_meses(120, avg):.2f}%\n"
+                        f"Next stop /ezeiza"
+                        )
 
         case _:
             logger.warning(f"Couln't understand in last_cmd_handler: {text}")
             return push(token, chat_id,"Sorry, I didn't understand you")
 
 
-def msg_handler():
+def msg_handler(token, chat_id, text):
 
     matches = ["hi", "hi", "hello", "hey", "hola", "ciao"]
     if any(x in text for x in matches):

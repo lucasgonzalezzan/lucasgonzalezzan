@@ -13,15 +13,13 @@ Author:
 import logging
 import logging.config
 import os
-import random
 import sys
-from time import sleep
 
 from telegram_msg_process import data_handler as handler
 from telegram_polling import poll as poll
+from json_file_rw import json_read
 
 import apidata  
-
 
 print("Running: ", sys.argv[0], flush=True) #print name of script
 
@@ -58,9 +56,19 @@ logging.debug(f"Current directory = {apidata.home!r}")
 
 if __name__ == '__main__':
     logger.info("Starting bot.")
-    offset = sys.argv[1] if len(sys.argv) > 1 else 0
+    logger.info("Loading JSON data from data/IPC.json")
+    try: 
+        apidata.ipc = json_read(apidata.home + "/data/IPC.json") 
+    except FileNotFoundError:
+        logger.exception("Failed to load JSON file.") #
+    else:
+        logger.info(f"Loaded local file data/IPC.json")
+        logger.debug(f"Data: {apidata.ipc!r}")
+    
+    offset = sys.argv[1] if len(sys.argv) > 1 else 0 #ternary operator
     errors = 0
     while errors < 100:
+
         try: 
             payload, status = poll(TOKEN, offset)
             if not(200 <= status < 300): 
@@ -72,13 +80,11 @@ if __name__ == '__main__':
             logger.debug(f"Payload is: {payload!r} Status is: {status!r}")
             
             if len(payload['result']): 
+                #"By default, updates starting with the earliest unconfirmed update are returned. An update is considered confirmed as soon as getUpdates is called with an offset higher than its update_id"
                 if 'result' in payload: 
                     last_id = len(payload['result'])-1
                     if 'update_id' in payload['result'][last_id]:
                         offset = int(payload['result'][last_id]['update_id']) +1
-                        _ , status = poll(TOKEN, offset) #poll with higher offset so as to "Confirm messages", then process
-                        sleep(1)
-
                         logger.info(f"Processing {len(payload['result']):d} menssages, last update_id was {offset-1:d}")
                         for index, msg in enumerate(payload['result']):
                             status = handler(TOKEN, msg) #returns response.status
