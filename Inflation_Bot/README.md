@@ -15,9 +15,9 @@ This is a Telegram Bot designed to gather official information from https://dato
 The bot accepts the following commands from any Telegram chat:
 
 - /start 	---	Welcome message
-- /help  	---	Bring up inline keyboard with commands
+- /help  	---	Bring up in-line keyboard with commands
 - /update  	---	Update Argentina's inflation rate "IPC" from datos.gob.ar
-- /raw - Verify IPC downloaded data, asks for how many months ago
+- /raw --- Verify IPC downloaded data, asks for how many months ago
 - /time  	---	Return current date and time in Argentina
 - /calcanual   --- Calculate the cumulative inflation in last year, semester and trimester
 - /calcmeses  ---	Same as /calcanual  but asks for the period in months
