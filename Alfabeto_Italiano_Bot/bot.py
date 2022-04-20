@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-'''Bot to spell out word using Italian cities and output a voice audio with the spelling in Italian
+'''Bot to spell out using Italian cities and output a voice message with the spelling in Italian
 
 
 Usage:

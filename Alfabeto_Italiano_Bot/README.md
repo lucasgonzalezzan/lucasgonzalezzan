@@ -8,7 +8,7 @@
  <img src="logo.jpg"  width="140" height="35" href="https://www.linkedin.com/in/lucasgonzalezzan" />
 
 
-This is Bot designed to spell out word using Italian cities and output a voice audio with the spelling in Italian.
+This is Bot designed to spell out using Italian cities and output a voice message with the spelling in Italian.
 
 
 ## Features
