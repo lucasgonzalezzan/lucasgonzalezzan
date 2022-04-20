@@ -10,7 +10,7 @@
 
 This is Bot designed to spell out using Italian cities and output a voice message with the spelling in Italian.
 
- <img src="link.jpg"   border="1" align="left" />
+ <img src="link.jpg"  width="170" height="240" border="1" align="center" />
 
 Scan to try live or follow: https://t.me/InflacionARGbot
 
