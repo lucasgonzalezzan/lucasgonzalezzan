@@ -1,4 +1,6 @@
-# Argentinian Inflation - a Telegram Bot
+
+
+# Italian Phonetic Alphabet - a Telegram Bot
 ## _by Lucas Gonzalez Zan_
 
 
@@ -6,24 +8,27 @@
  <img src="logo.jpg"  width="140" height="35" href="https://www.linkedin.com/in/lucasgonzalezzan" />
 
 
-This is a Telegram Bot designed to gather official information from https://datos.gob.ar/ via API.
+This is Bot designed to spell out word using Italian cities and output a voice audio with the spelling in Italian.
 
 
 ## Features
 
-So far, the bot accepts the following commands from any Telegram chat:
+The bot accepts the following commands from any Telegram chat:
 
-- /start 	---	Restart bot
-- /help  	---	Bring up inline keyboard with commnads
-- /update  	---	Update Argentina's inflation rate "IPC" from datos.gob.ar
-- /time  	---	Return current date and time in Argentina
-- /calc_anual   ---	Given the number of months, calculate the cumulative inflation in that period 
+- /start 	---	Welcome message
+- /help  	---	Bring up in-line keyboard with commands
+- /abc  	---	Ask for text to spell out [^1]
+- /listen --- Generate voice reply from last spelling [^2]
+- /info --- Return this source code link
 
+
+[^1]: Uses the dictionary defined in "apidata", non [A-Z] characters are ignored 
+[^2]: The ogg files in /audios are joint (with headers recalculated) 
 
 <!-- [![](livebot.gif), align=center]()
  --> 
 
- <img src="livebot.gif"  width="754" height="480" border="1" align="center" />
+ <img src="livebot.gif"   border="1" align="center" />
 
 
 ## Usage
@@ -40,7 +45,7 @@ Output log:
 > 2022-03-16 17:04:27,464 - root - INFO - Processing 1 menssages, last update_id was 441657297 <br/>
 > 2022-03-16 17:04:27,464 - telegram_msg_process - DEBUG - Last command was: None <br/>
 
-Logging is saved in "bot.log". Optionally, we can set the debuggin level via the environment variable:
+Logging is saved in "rotating.bot.log" which rotate logs every 2MB into a new file. Optionally, we can set the debugging level via the environment variable:
 ``` 
 LOGLVL = DEBUG
 export LOGLVL
@@ -52,10 +57,11 @@ export LOGLVL
 
 ## Tech
 
-No special modules are needed, only an updated enviroment:
+No special modules are needed, only an updated release of python for new features, such as `case`:
 
 - python-3.10.2
 
+The ogg files are joint by the `myogg` library, a custom class which splits ogg pages and headers. A joint valid stream is delivered by recalculating ogg headers and checksums. 
 
 ## Installation
 
