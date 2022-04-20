@@ -9,6 +9,9 @@
 
 This is a Telegram Bot designed to gather official information from https://datos.gob.ar/ via API.
 
+ <img src="link.jpg"  width="170" height="240" border="1" align="center" />
+
+Scan to try live or follow: https://t.me/InflacionARGbot
 
 ## Features
 

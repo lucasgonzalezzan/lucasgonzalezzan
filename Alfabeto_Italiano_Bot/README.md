@@ -12,7 +12,7 @@ This is Bot designed to spell out using Italian cities and output a voice messag
 
  <img src="link.jpg"  width="170" height="240" border="1" align="center" />
 
-Scan to try live or follow: https://t.me/InflacionARGbot
+Scan to try live or follow: https://t.me/ItalianAlphabetbot
 
 ## Features
 
