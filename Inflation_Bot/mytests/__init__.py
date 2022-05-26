@@ -1,0 +1,1 @@
+#an empty __init__.py file in the tests folder is needed for unittest automatic discover

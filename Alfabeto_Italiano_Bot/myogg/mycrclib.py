@@ -115,6 +115,17 @@ def crc32calc_r(msg, init=0xffffffff):
 
 if __name__ == '__main__':
 
+    assert crc32calc(b'\x7f\xca\xfe\x42') == 0xD829B167, "CRC-32/MPEG-2 should be 0xD829B167" 
+    assert crc32calc(b'\x7f\xca\xfe\x42', init=0xffffffff, xorout=True) == 0x27D64E98, "CRC-32/BZIP2 should be 0x27D64E98" 
+    assert crc32calc(b'\x7f\xca\xfe\x42', init=0, refin=False, refout=False, xorout=False) == 0x1F2D6C1C, "CRC-32 OGG should be 0x1F2D6C1C" 
+    assert crc32calc(b'\x7f\xca\xfe\x42', init=0, refin=False, refout=False, xorout=True) == 0xE0D293E3, "CRC-32/POSIX should be 0xE0D293E3" 
+    assert crc32calc(b'\x7f\xca\xfe\x42', init=0xffffffff, refin=True, refout=True, xorout=True) == 0x9CCD90CF, "CRC-32 (Ethe) should be 0x9CCD90CF" 
+
+    assert crc32ogg(b'\x7f\xca\xfe\x42') == 0x1F2D6C1C, "CRC for ogg files Failed"
+    assert crc32ogg16(b'\x7f\xca\xfe\x42') == 0x1F2D6C1C, "CRC for ogg files (16bit table) Failed"
+
+    print("Test Passed")
+
     import functools
     import time
     def timer(func):
@@ -158,8 +169,8 @@ if __name__ == '__main__':
 
 # https://crccalc.com/ pagina calculos:
     # Algorithm     Result      Check       Poly        Init        RefIn   RefOut  XorOut
-    # CRC-32/MPEG-2 0x047679CA  0x0376E6E7  0x04C11DB7  0xFFFFFFFF  false   false   0x00000000
-    # CRC-32/BZIP2  0xFB898635  0xFC891918  0x04C11DB7  0xFFFFFFFF  false   false   0xFFFFFFFF
-    # CRC-32 OGG      04C11DB7              0x04C11DB7  0x00000000  false   false   0x00000000 (OJO! LSByte fist in .ogg page header)
-    # CRC-32/POSIX  0xFB3EE248  0x765E7680  0x04C11DB7  0x00000000  false   false   0xFFFFFFFF
-    # CRC-32 (Ethe) 0x36DE2269  0xCBF43926  0x04C11DB7  0xFFFFFFFF  true    true    0xFFFFFFFF
+    # CRC-32/MPEG-2 0xD829B167  0x0376E6E7  0x04C11DB7  0xFFFFFFFF  false   false   0x00000000
+    # CRC-32/BZIP2  0x27D64E98  0xFC891918  0x04C11DB7  0xFFFFFFFF  false   false   0xFFFFFFFF
+    # CRC-32 OGG      1F2D6C1C              0x04C11DB7  0x00000000  false   false   0x00000000 
+    # CRC-32/POSIX  0xE0D293E3  0x765E7680  0x04C11DB7  0x00000000  false   false   0xFFFFFFFF
+    # CRC-32 (Ethe) 0x9CCD90CF  0xCBF43926  0x04C11DB7  0xFFFFFFFF  true    true    0xFFFFFFFF
