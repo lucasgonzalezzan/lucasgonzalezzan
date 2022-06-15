@@ -1,4 +1,9 @@
 # Lucas Gonzalez Zan
+- 👋 Hi, I’m @lucasgonzalezzan
+- 👀 I’m interested in Python NETCONF RESTCONF APIs Dokers
+- 🌱 I’m looking to collaborate on SDN, Optical Network Automation
+- 📫 How to reach me lucasgonzalezzan@gmail.com | www.linkedin.com/in/lucasgonzalezzan/
+
 ## Public projects
 
 
