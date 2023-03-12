@@ -1,0 +1,10 @@
+.git/
+*/__pycache__/
+*/*/__pycache__/
+*.log
+*.md
+!README*.md
+Dockerfile
+*.jpg
+*.gif
+mytests/

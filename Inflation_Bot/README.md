@@ -7,7 +7,7 @@
  <img src="logo.jpg"  width="140" height="35" href="https://www.linkedin.com/in/lucasgonzalezzan" />
 
 
-This is a Telegram Bot designed to gather official information from https://datos.gob.ar/ via API.
+This is a Telegram Bot designed to gather official Argentinian inflation information from https://datos.gob.ar/ via API.
 
  <img src="link.jpg"  width="170" height="240" border="1" align="center" />
 
@@ -68,9 +68,16 @@ No special modules are needed, only an updated release of python for new feature
 - python-3.10.2
 
 
-## Installation
+## Docker
 
-No packages needed
+Requires `python:3.10-alpine3.17` or higher.
+In Dockerfile update your telegram token:
+ENV TOKEN="1234567890:ABCDEFGHIJKMNLOPQRSTUVXYZabcdefghij"
+
+```
+sudo docker build -t inflacionargbot . 
+sudo docker run -d --name inflacionargbot_1 inflacionargbot 
+```
 
 
 ## License

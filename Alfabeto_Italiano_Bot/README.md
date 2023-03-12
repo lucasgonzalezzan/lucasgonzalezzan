@@ -8,7 +8,7 @@
  <img src="logo.jpg"  width="140" height="35" href="https://www.linkedin.com/in/lucasgonzalezzan" />
 
 
-This is Bot designed to spell out using Italian cities and output a voice message with the spelling in Italian.
+This is a Telegram Bot designed to spell out using Italian cities and output a voice message with the spelling in Italian.
 
  <img src="link.jpg"  width="170" height="240" border="1" align="center" />
 
@@ -66,10 +66,16 @@ No special modules are needed, only an updated release of python for new feature
 
 The ogg files are joint by the `myogg` library, a custom class which splits ogg pages and headers. A joint valid stream is delivered by recalculating ogg headers and checksums. 
 
-## Installation
+## Docker
 
-No packages needed
+Requires `python:3.10-alpine3.17` or higher.
+In Dockerfile update your telegram token:
+ENV TOKEN="1234567890:ABCDEFGHIJKMNLOPQRSTUVXYZabcdefghij"
 
+```
+sudo docker build -t italianalphabetbot . 
+sudo docker run -d --name italianalphabetbot_1 italianalphabetbot 
+```
 
 ## License
 
