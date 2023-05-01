@@ -19,7 +19,7 @@ def push(token, chat_id, msg, keyboard = "", MarkdownV2 = False):
     httprequest = Request(url, headers={"Accept": "application/json"}) 
 
     try:
-        with urlopen(httprequest) as response:
+        with urlopen(httprequest, timeout=5) as response:
             r = response.read().decode() 
     except urllib.error.HTTPError as e:
         print(f"An exception occurred in urlopen telegram_pushing: {e}", flush=True)  

@@ -8,7 +8,7 @@ def poll(token, offset = 0):
     httprequest = Request(url, headers={"Accept": "application/json"})
 
     try: 
-        with urlopen(httprequest) as response: 
+        with urlopen(httprequest, timeout=5) as response: 
             r = response.read().decode() 
             j = json.loads(r) 
 

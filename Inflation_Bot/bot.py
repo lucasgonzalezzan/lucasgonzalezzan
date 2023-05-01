@@ -113,3 +113,4 @@ if __name__ == '__main__':
         
 
     logger.critical(f"Exiting bot due to too many errors: {errors}")
+    exit(1)
