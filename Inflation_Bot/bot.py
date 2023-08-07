@@ -70,7 +70,7 @@ if __name__ == '__main__':
     while errors < 100:
 
         try: 
-            payload, status = poll(TOKEN, offset)
+            payload, status = poll(TOKEN, offset) # get message updates from telegram server https://core.telegram.org/bots/api#getupdates
             if not(200 <= status < 300): 
                 errors += 1
                 logger.error(f"Polling returned status not 2XX: {status!r}")
@@ -79,12 +79,11 @@ if __name__ == '__main__':
         
             logger.debug(f"Payload is: {payload!r} Status is: {status!r}")
             
-            if len(payload['result']): 
-                #"By default, updates starting with the earliest unconfirmed update are returned. An update is considered confirmed as soon as getUpdates is called with an offset higher than its update_id"
+            if len(payload['result']): # json field with messages not null?
                 if 'result' in payload: 
                     last_id = len(payload['result'])-1
                     if 'update_id' in payload['result'][last_id]:
-                        offset = int(payload['result'][last_id]['update_id']) +1
+                        offset = int(payload['result'][last_id]['update_id']) + 1 # Save message id. "An update is considered confirmed as soon as getUpdates is called with an offset higher than its update_id"
                         logger.info(f"Processing {len(payload['result']):d} menssages, last update_id was {offset-1:d}")
                         for index, msg in enumerate(payload['result']):
                             status = handler(TOKEN, msg) #returns response.status

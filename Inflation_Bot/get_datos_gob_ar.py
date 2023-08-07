@@ -2,11 +2,11 @@ from urllib.request import urlopen, Request
 import urllib.error
 import json
 
-def ipc_poll(fecha, representacion = 'percent_change'):
+def ipc_poll(start_date, representation = 'percent_change'):
 
     url = ('http://apis.datos.gob.ar/series/api/series/?' 
-        + 'ids=148.3_INIVELNAL_DICI_M_26&start_date=' + str(fecha) 
-        + '&representation_mode=' + str(representacion) ) #Inflacion IPC nacional como variacion mensual
+        + 'ids=148.3_INIVELNAL_DICI_M_26&start_date=' + str(start_date) 
+        + '&representation_mode=' + str(representation) ) #Inflation national IPC monthly 
     httprequest = Request(url, headers={"Accept": "application/json"})
 
     try:
@@ -21,8 +21,3 @@ def ipc_poll(fecha, representacion = 'percent_change'):
         return "An exception occurred in urlopen IPCpolling get_datos_gob_ar", 404           
 
     else: return j['data'], response.status 
-
-# https://apis.datos.gob.ar/series/api/series?start_date=2018-08&ids=168.1_T_CAMBIOR_D_0_0_26
-# {'data': [['2018-08-01', 27.525],
-#   ['2018-08-02', 27.45],
-#   ['2018-08-03', 27.29],...

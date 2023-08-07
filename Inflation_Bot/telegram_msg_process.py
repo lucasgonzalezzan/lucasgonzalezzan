@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timezone, timedelta
 from telegram_pushing import push, push_photo
 from get_datos_gob_ar import ipc_poll
-from calc_datos_gob_ar import cumulative_meses, promedio_meses, project_meses
+from calc_datos_gob_ar import cumulative_months, average_months, project_months
 from json_file_rw import json_write, bin_read
 
 import apidata 
@@ -49,12 +49,8 @@ def cmd_handler(token, chat_id, text):
                 return push(token, chat_id, "Hola\\! \nToca */help* para menu de ayuda\nToca */calcanual* o */calcmeses* para promedios de inflacion\nToca */project* para proyectar la inflacion a futuro segun % promedio", MarkdownV2=True) 
             #MarkdownV2. At the same time these _ * [ ] ( ) ~ > # + - = | { } . ! characters must be escaped with the preceding character \.
 
-        case "/basta":
-            push(token, chat_id, "   Bye bye\n      (o o)\n--o--(_)--o--\nHave a nice day!")
-            logger.critical("Exiting bot on user request")
-            exit(0)
 
-        case "/help":
+        case "/help":   # reply with a keyboard with interactive buttons and commands (handled as a callback_query) 
             apidata.last_cmd[chat_id] = None
             return push(token, chat_id, "Elige una opcion: ", 
                     {'inline_keyboard': [
@@ -72,9 +68,9 @@ def cmd_handler(token, chat_id, text):
             logger.debug(f"TIME: {now!r}")
             return push(token, chat_id,"Fecha: " + now.strftime('%d/%B/%Y') + "\nHora en Argentina: " + now.strftime('%H : %M : %S') )
 
-        case "/update":
+        case "/update": # update data from API
             apidata.last_cmd[chat_id] = None
-            data, status = ipc_poll("2017-01-01")
+            data, status = ipc_poll("2017-01-01") # call update with the starting date
             if not(200 <= status < 300): return push(token, chat_id, f"ERROR: No fue posible obtener datos de IPC desde datos.gob.ar") 
             try:    #verify data
                 _ = data[0]     #at least one item in list
@@ -95,48 +91,48 @@ def cmd_handler(token, chat_id, text):
                 chunk = chunk + i[0] + " - " + str(round(i[1]*100, 2)) + "%\n"
             return  push(token, chat_id, f"Actualizados datos de IPC desde datos.gob.ar \nUltimos 6 meses: \n{chunk}")  
 
-        case "/calcmeses":
+        case "/calcmeses":  # calculate cumulative % in X months
             apidata.last_cmd[chat_id] = "/calcmeses"
             logger.debug(f"Setting Last command to: {apidata.last_cmd[chat_id]}")  
             return push(token, chat_id, f"Calcular % acumulado de cuantos meses?") 
 
-        case "/raw":
+        case "/raw":        # see raw data of X months
             apidata.last_cmd[chat_id] = "/raw"
             logger.debug(f"Setting Last command to: {apidata.last_cmd[chat_id]}")  
             return push(token, chat_id, f"Mostrar datos de cuantos meses?") 
 
-        case "/project":
+        case "/project":    # calculate future inflation using the last months inflation rate
             apidata.last_cmd[chat_id] = "/project"
             logger.debug(f"Setting Last command to: {apidata.last_cmd[chat_id]}")  
             return push(token, chat_id, f"Projectar inflacion usando cuantos meses?")         
 
-        case "/calcanual":
+        case "/calcanual": # calculate cumulative % in last trimesters 
             apidata.last_cmd[chat_id] = None
             return push(token, chat_id, 
-                        f"Acumulado anual: {cumulative_meses(12):.2f}%\n\n"  
-                        f"Acumulado semestral: {cumulative_meses(6,-1):.2f}% \nSemestre anterior: {cumulative_meses(6,-6):.2f}%\n\n" 
-                        f"Trimestral (1-3): {cumulative_meses(3,-1):.2f}%\nTrimestral (4-6): {cumulative_meses(3,-4):.2f}%\n"
-                        f"Trimestral (7-9): {cumulative_meses(3,-7):.2f}%\nTrimestral (10-12): {cumulative_meses(3,-10):.2f}%"
+                        f"Acumulado anual: {cumulative_months(12):.2f}%\n\n"  
+                        f"Acumulado semestral: {cumulative_months(6,-1):.2f}% \nSemestre anterior: {cumulative_months(6,-6):.2f}%\n\n" 
+                        f"Trimestral (1-3): {cumulative_months(3,-1):.2f}%\nTrimestral (4-6): {cumulative_months(3,-4):.2f}%\n"
+                        f"Trimestral (7-9): {cumulative_months(3,-7):.2f}%\nTrimestral (10-12): {cumulative_months(3,-10):.2f}%"
                         )
 
-        case "/promedio":
+        case "/promedio":   # calculate average inflation rate
             apidata.last_cmd[chat_id] = None
             return push(token, chat_id, 
                         f"Promedios calculados como (meses) √ (total)\ni.e. mismo % en cada mes en el periodo para igualar /calcanual\n\n"  
-                        f"Promedio anual: {promedio_meses(12):.2f}%\n\n"  
-                        f"Promedio semestral: {promedio_meses(6,-1):.2f}% \nSemestre anterior: {promedio_meses(6,-6):.2f}%\n\n" 
-                        f"Trimestral (1-3): {promedio_meses(3,-1):.2f}%\nTrimestral (4-6): {promedio_meses(3,-4):.2f}%\n"
-                        f"Trimestral (7-9): {promedio_meses(3,-7):.2f}%\nTrimestral (10-12): {promedio_meses(3,-10):.2f}%"
+                        f"Promedio anual: {average_months(12):.2f}%\n\n"  
+                        f"Promedio semestral: {average_months(6,-1):.2f}% \nSemestre anterior: {average_months(6,-6):.2f}%\n\n" 
+                        f"Trimestral (1-3): {average_months(3,-1):.2f}%\nTrimestral (4-6): {average_months(3,-4):.2f}%\n"
+                        f"Trimestral (7-9): {average_months(3,-7):.2f}%\nTrimestral (10-12): {average_months(3,-10):.2f}%"
                         )
 
-        case "/ezeiza":
+        case "/ezeiza":     # send a joke picture
             apidata.last_cmd[chat_id] = None
             return push_photo(token, chat_id,f"La salida es Ezeiza #PLP", bin_read(apidata.home + "/data/nuevereinas.jpg"))
 
-        case "/info":
+        case "/info":       # ask for source code
             return push(token, chat_id, f"Source code: https://github.com/lucasgonzalezzan/lucasgonzalezzan/tree/master/Inflation_Bot")
 
-        case _:
+        case _:         # default, command not found
             apidata.last_cmd[chat_id] = None
             logger.warning(f"Couln't understand in cmd_handler: {text}")
             return push(token, chat_id,"Sorry, I didn't understand you")
@@ -145,7 +141,7 @@ def cmd_handler(token, chat_id, text):
 def last_cmd_handler(token, chat_id, text):
 
     match apidata.last_cmd[chat_id]:
-        case "/calcmeses":
+        case "/calcmeses":  # calculate cumulative % in X months
             try:
                 apidata.last_cmd[chat_id] = None #Mark Complete
                 logger.debug(f"text: {text}")
@@ -156,9 +152,9 @@ def last_cmd_handler(token, chat_id, text):
                 logger.exception(f"Meses was not an int!")
                 return push(token, chat_id, f"Por favor ingresa un numero *natural* de uno a {len(apidata.ipc)}", MarkdownV2=True) 
                 
-            return push(token, chat_id, f"La inflacion acumulada en {meses} meses es de {cumulative_meses(meses):.2f}%\n Projectar /project") 
+            return push(token, chat_id, f"La inflacion acumulada en {meses} meses es de {cumulative_months(meses):.2f}%\n Projectar /project") 
 
-        case "/raw":
+        case "/raw":        # see raw data of X months
             try:
                 apidata.last_cmd[chat_id] = None #Mark Complete
                 meses = abs(int(text))
@@ -171,7 +167,7 @@ def last_cmd_handler(token, chat_id, text):
                 chunk = chunk + i[0] + " - " + str(round(i[1]*100, 2)) + "%\n"
             return push(token, chat_id, f"Actualizados datos de IPC desde datos.gob.ar \nUltimos {meses} meses: \n{chunk}")  
 
-        case "/project":
+        case "/project":    # calculate future inflation using the last X months average inflation rate
             try:
                 apidata.last_cmd[chat_id] = None #Mark Complete
                 meses = abs(int(text))
@@ -180,15 +176,15 @@ def last_cmd_handler(token, chat_id, text):
                 logger.exception(f"Meses was not an int!")
                 return push(token, chat_id, f"Por favor ingresa un numero *natural* de uno a {len(apidata.ipc)}", MarkdownV2=True) 
 
-            avg = promedio_meses(meses)
+            avg = average_months(meses)
             return push(token, chat_id, 
-                        f"La inflacion acumulada en {meses} meses es de {cumulative_meses(meses):.2f}%\nPara otros promedios usa /calcmeses\n\n"
+                        f"La inflacion acumulada en {meses} meses es de {cumulative_months(meses):.2f}%\nPara otros promedios usa /calcmeses\n\n"
                         f"Projeccion de inflacion con promedio de {avg:.2f}% en cada mes:\n"  
-                        f"En 3 meses: {project_meses(3, avg):.2f}%\n"  
-                        f"En 6 meses: {project_meses(6, avg):.2f}%\n" 
-                        f"En un año: {project_meses(12, avg):.2f}%\n"
-                        f"En 2 años: {project_meses(24, avg):.2f}%\n"
-                        f"En 10 años: {project_meses(120, avg):.2f}%\n"
+                        f"En 3 meses: {project_months(3, avg):.2f}%\n"  
+                        f"En 6 meses: {project_months(6, avg):.2f}%\n" 
+                        f"En un año: {project_months(12, avg):.2f}%\n"
+                        f"En 2 años: {project_months(24, avg):.2f}%\n"
+                        f"En 10 años: {project_months(120, avg):.2f}%\n"
                         f"Next stop /ezeiza"
                         )
 
@@ -196,7 +192,7 @@ def last_cmd_handler(token, chat_id, text):
             logger.warning(f"Couln't understand in last_cmd_handler: {text}")
             return push(token, chat_id,"Sorry, I didn't understand you")
 
-
+# simple messages replies
 def msg_handler(token, chat_id, text):
 
     matches = ["hi", "hi", "hello", "hey", "hola", "ciao"]

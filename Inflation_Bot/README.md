@@ -79,6 +79,15 @@ sudo docker build -t inflacionargbot .
 sudo docker run -d --name inflacionargbot_1 inflacionargbot 
 ```
 
+## Workflow
+
+### Workflow bot.py
+ <img src="workflow_inflation_bot.svg"   border="1" align="left" />
+
+### Workflow telegram_msg_process.py
+
+ <img src="workflow_inflation_msg_process.svg"   border="1" align="left" />
+
 
 ## License
 
