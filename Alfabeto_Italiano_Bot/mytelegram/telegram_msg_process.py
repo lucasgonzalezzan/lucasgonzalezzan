@@ -23,11 +23,6 @@ def data_handler(token, msg):
                 return push(token, chat_id, "Ciao\\! I'm a bot to spell in italian alphabet\\. \nPress */help* for help menu\\. \nPress */abc* to translate\\.\nPress */listen* to convert text to audio\\.", MarkdownV2=True) 
                 #MarkdownV2. At the same time these _ * [ ] ( ) ~ > # + - = | { } . ! characters must be escaped with the preceding character \.
 
-            case "/basta":
-                push(token, chat_id, "   Bye bye\n      (o o)\n--o--(_)--o--\nHave a nice day!")
-                logger.critical("Exiting bot on user request")
-                exit(0)
-
             case "/help":
                 user.last_cmd = None
                 return push(token, chat_id, "I'm a bot to spell in italian alphabet.\nPress /start for a list of cmds\nOr choose an option:", 
@@ -91,7 +86,7 @@ def data_handler(token, msg):
 
                     reply = f"For word {word}:"
                     for k, v in zip(keys, values):
-                        reply += f"\n{k} come {v}"
+                        reply += f"\n{k} as in {v}" # letter k as in city v
                     status = push(token, chat_id, f"{reply}")
                     results.append(True) if (200 <= status < 300) else results.append(False)
 

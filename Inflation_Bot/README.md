@@ -4,12 +4,12 @@
 
 
 
- <img src="logo.jpg"  width="140" height="35" href="https://www.linkedin.com/in/lucasgonzalezzan" />
+ <img src="logo.jpg"  width="200" height="50" href="https://www.linkedin.com/in/lucasgonzalezzan" />
 
 
 This is a Telegram Bot designed to gather official Argentinian inflation information from https://datos.gob.ar/ via API.
 
- <img src="link.jpg"  width="170" height="240" border="1" align="center" />
+ <img src="link.jpg"  width="200" height="300" border="1" align="center" />
 
 Scan to try live or follow: https://t.me/InflacionARGbot
 
@@ -57,11 +57,7 @@ LOGLVL = DEBUG
 export LOGLVL
 ```
 
-
-
-
-
-## Tech
+## Dependencies
 
 No special modules are needed, only an updated release of python for new features, such as `case`:
 
@@ -82,15 +78,21 @@ sudo docker run -d --name inflacionargbot_1 inflacionargbot
 ## Workflow
 
 ### Workflow bot.py
- <img src="workflow_inflation_bot.svg"   border="1" align="left" />
+The main process constantly polls telegrams servers for new messages. For each message, the data_handler in telegram_msg_process takes the request and answers to the corresponding user, via telegram's API.
+<img src="workflow_inflation_bot.svg" width="600" border="1" align="center" />  
 
 ### Workflow telegram_msg_process.py
+Telegram's API has different message types:
+- Simple text message
+- Command message, these start with '/'
+- Callback query, these result from touching a graphic keyboard in the app (see InlineKeyboardButton [^2])
 
- <img src="workflow_inflation_msg_process.svg"   border="1" align="left" />
+[^2]: InlineKeyboardButton represents a button structure in the app, see docs https://core.telegram.org/bots/api#inlinekeyboardbutton 
 
+Finally, some commands need further information from the user. The app saves the user's ID.
+<img src="workflow_inflation_msg_process.svg" width="600" border="1" align="center" />
 
 ## License
-
 
 
 **It's Free Software :)**
